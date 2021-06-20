@@ -31,4 +31,7 @@ Settings:
  - Set access header token in AccessCheck for secure access to developer end points (add "token=your_token" to headers of your requests to the end points)
  - Set url of your Telegram bot in Messenger (https://api.telegram.org/botYOUR_BOT_TOKEN/sendMessage)
  - Set host and port of your elasticsearch database in ElasticsearchClientConfig
+ - Optional
+    - You can change maximum quantity of requests to skiplagged.com daily in UserRequestsSummary (current value is 20000 based on load tests)
+    - You can change maximum quantity of requests allowed per user search in Utils (current value is 1000)
 
