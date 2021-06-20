@@ -3,11 +3,17 @@ This service is searching for the lowest ticket price for loose search (e.g. Par
 The search is run daily.
 
 Telegram bot is used as a front end. (messages from users to shape requests)
+
 Tickets price data is parsed from https://skiplagged.com/ with selenium headless browser. (10 browsers spawned in simultaneously with directional time for 1 search execution - 30s)
+
 Source for list of cities and airports: https://ourairports.com/data/
+
 Back end written on Java. (users request processing and sending results back to Telegram plus developer end points to manipulate information in database - see RequestController)
+
 Search requests information is storied in mongodb.
+
 Search for cities and airports was implemented with elasticsearch.
+
 
 Deployment requirements:
  - Docker with mongodb and elasticsearch
