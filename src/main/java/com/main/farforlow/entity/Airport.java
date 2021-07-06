@@ -2,33 +2,24 @@ package com.main.farforlow.entity;
 
 import com.opencsv.bean.CsvBindByName;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.elasticsearch.annotations.Document;
-import org.springframework.data.elasticsearch.annotations.Field;
-import org.springframework.data.elasticsearch.annotations.FieldType;
 
-@Document(indexName = "aiportindex")
 public class Airport {
     @Id
     @CsvBindByName(column = "ident")
     private String id;
 
-    @Field(type = FieldType.Text, name = "city")
     @CsvBindByName(column = "municipality")
     private String city;
 
-    @Field(type = FieldType.Keyword, name = "countryCode")
     @CsvBindByName(column = "iso_country")
     private String countryCode;
 
-    @Field(type = FieldType.Keyword, name = "codeIata")
     @CsvBindByName(column = "iata_code")
     private String codeIata;
 
-    @Field(type = FieldType.Text, name = "name")
     @CsvBindByName(column = "name")
     private String name;
 
-    @Field(type = FieldType.Keyword, name = "type")
     @CsvBindByName(column = "type")
     private String type;
 

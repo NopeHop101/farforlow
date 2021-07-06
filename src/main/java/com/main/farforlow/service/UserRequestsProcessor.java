@@ -114,6 +114,6 @@ public class UserRequestsProcessor {
                 requestDAL.update(userRequest);
             }
         }
-        messenger.sendMessage("148678", "All users requests completed");
+        messenger.sendMessage(System.getenv("BOT_OWNER_TELEGRAM_ID"), "All users requests completed");
     }
 }

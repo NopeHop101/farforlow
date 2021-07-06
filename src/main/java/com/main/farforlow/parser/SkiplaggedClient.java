@@ -25,10 +25,10 @@ public class SkiplaggedClient {
     private Logger log = LoggerFactory.getLogger(SkiplaggedClient.class);
 
     private List<String> proxies = new ArrayList<>(Arrays.asList(
-            "51.222.21.93:32768"
+            System.getenv("PROXIES").split(",")
     ));
 
-    private String chromeDriverPath = "YOUR_PATH";
+    private String chromeDriverPath="/usr/local/bin/chromedriver";
 
     public Result getTripOptionBestPrice(String departureAirport,
                                          String destinationAirport,
@@ -45,7 +45,24 @@ public class SkiplaggedClient {
 
         System.setProperty("webdriver.chrome.driver", chromeDriverPath);
         ChromeOptions options = new ChromeOptions();
-        options.addArguments("--headless", "--ignore-certificate-errors", "--silent", "--proxy-server=" + proxies.get(randomProxy));
+        options.addArguments(
+                "--verbose",
+                "--headless",
+                "--ignore-certificate-errors",
+                "--disable-web-security",
+                "--silent",
+                "--proxy-server=" + proxies.get(randomProxy),
+                "--allow-running-insecure-content",
+                "--allow-insecure-localhost",
+                "--no-sandbox",
+                "--disable-gpu",
+                "--window-size=1920,1200",
+                "--disable-dev-shm-usage",
+                "--disable-impl-side-painting",
+                "--disable-gpu-sandbox",
+                "--disable-accelerated-2d-canvas",
+                "--disable-accelerated-jpeg-decoding",
+                "--test-type=ui");
         WebDriver driver = new ChromeDriver(options);
         try {
             String requestLink;
@@ -66,7 +83,7 @@ public class SkiplaggedClient {
             try {
                 Thread.sleep(5000);
             } catch (Exception e) {
-                log.error(request + ": skiplagged didn't load " + e.getMessage());
+                log.error(request + ": " + randomProxy + ":" + proxies.get(randomProxy) + ": skiplagged didn't load " + e.getMessage());
             }
 
             // Exit is no options for this dates/ airports
@@ -87,7 +104,7 @@ public class SkiplaggedClient {
             // Exit is no options for this dates/ airports
             noOptions = driver.findElement(By.xpath("//*[@id='flights-container']")).getText();
             if (noOptions.contains("No flights found.")) {
-                log.info(request + ": No flights found.");
+                log.info(request + ": " + randomProxy + ":" + proxies.get(randomProxy) + ": No flights found.");
                 driver.close();
                 return null;
             }
@@ -100,12 +117,12 @@ public class SkiplaggedClient {
             res.setLink(requestLink);
             res.setOfferDate(new Date());
 
-            log.info(request + ": OK " + res.getPriceGbp());
+            log.info(request + ": " + randomProxy + ":" + proxies.get(randomProxy) + ": OK " + res.getPriceGbp());
             driver.close();
 
             return res;
         } catch (Exception e) {
-            log.error(request + ": FAILED " + e.getMessage());
+            log.error(request + ": " + randomProxy + ":" + proxies.get(randomProxy) + ": FAILED " + e.getMessage());
             driver.close();
             return null;
         }
