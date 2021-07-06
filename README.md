@@ -15,23 +15,5 @@ Search requests information is storied in mongodb.
 Search for cities and airports was implemented with elasticsearch.
 
 
-Deployment requirements:
- - Docker with mongodb and elasticsearch
- - Java 8
- - Chrome driver
- - Bot in Telegram created with BotFather
-
-Settings:
- - application.properties
-    - uri for your mongodb
-    - enabled elasticsearch repositories
-    - logging file path with name
- - Set your list of proxies in SkiplaggedClient for rotation to avoid block from skiplagged.com
- - Set path to chrome driver in SkiplaggedClient
- - Set access header token in AccessCheck for secure access to developer end points (add "token=your_token" to headers of your requests to the end points)
- - Set url of your Telegram bot in Messenger (https://api.telegram.org/botYOUR_BOT_TOKEN/sendMessage)
- - Set host and port of your elasticsearch database in ElasticsearchClientConfig
- - Optional
-    - You can change maximum quantity of requests to skiplagged.com daily in UserRequestsSummary (current value is 20000 based on load tests)
-    - You can change maximum quantity of requests allowed per user search in Utils (current value is 1000)
-
+Deployment through Docker (see docker-compose.yml to add your settings)
+Bot in Telegram needs to be created with BotFather (see Telegram api documentation)
