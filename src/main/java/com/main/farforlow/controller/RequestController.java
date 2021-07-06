@@ -1,7 +1,5 @@
 package com.main.farforlow.controller;
 
-import com.main.farforlow.digester.model.AirportParserModel;
-import com.main.farforlow.elasticsearch.AirportSearchService;
 import com.main.farforlow.entity.Airport;
 import com.main.farforlow.entity.Status;
 import com.main.farforlow.entity.UserRequest;
@@ -40,21 +38,16 @@ public class RequestController {
     private RequestsSummaryDAL requestsSummaryDAL;
     private Utils utils;
     private Messenger messenger;
-    private AirportSearchService airportSearchService;
-    private AirportParserModel airportParserModel;
     private UserRequestsProcessor userRequestsProcessor;
 
     @Autowired
-    public RequestController(RequestDAL requestDAL, RequestsSummaryDAL requestsSummaryDAL, Utils utils, Messenger messenger,
-                             AirportSearchService airportSearchService, UserRequestsProcessor userRequestsProcessor,
-                             AirportParserModel airportParserModel) {
+    public RequestController(RequestDAL requestDAL, RequestsSummaryDAL requestsSummaryDAL, Utils utils,
+                             Messenger messenger, UserRequestsProcessor userRequestsProcessor) {
         this.requestDAL = requestDAL;
         this.requestsSummaryDAL = requestsSummaryDAL;
         this.utils = utils;
         this.messenger = messenger;
-        this.airportSearchService = airportSearchService;
         this.userRequestsProcessor = userRequestsProcessor;
-        this.airportParserModel = airportParserModel;
     }
 
     @PreAuthorize("permitAll()")

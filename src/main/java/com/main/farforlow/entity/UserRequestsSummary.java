@@ -7,7 +7,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class UserRequestsSummary {
     @Id
     private String id;
-    private Integer maxQuantityOfSearches = 20000;
+    private Integer maxQuantityOfSearches = Integer.parseInt(System.getenv("MAX_SEARCHES_PER_DAY"));
     private Integer currentQuantityOfSearches;
 
     public String getId() {

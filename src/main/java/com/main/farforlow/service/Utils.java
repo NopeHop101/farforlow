@@ -1,6 +1,5 @@
 package com.main.farforlow.service;
 
-import com.main.farforlow.elasticsearch.AirportSearchService;
 import com.main.farforlow.entity.Airport;
 import com.main.farforlow.entity.UserRequest;
 import com.main.farforlow.exception.CityException;
@@ -23,16 +22,26 @@ import java.util.Set;
 @Service
 public class Utils {
 
-    private final Integer MAX_REQUESTS_NUMBER = 1000;
+    private final Integer MAX_REQUESTS_NUMBER = Integer.parseInt(System.getenv("MAX_SEARCHES_PER_REQUEST"));
+    private boolean createAirportsDatabase = true;
 
     @Autowired
     private AirportSearchService airportSearchService;
 
+    @Autowired
+    AirportParserModel airportParserModel;
+
     public List<Airport> getAirports(String cityName, String countryCode) throws CityException {
+
+        if (createAirportsDatabase) {
+            airportSearchService.createAirportsDB(airportParserModel.getAirports());
+            createAirportsDatabase = false;
+        }
+
         List<Airport> res = null;
-        if (cityName != null && !cityName.isEmpty() && countryCode != null && !countryCode.isEmpty()) {
+        if (cityName != null && cityName.length() > 2 && countryCode != null && !countryCode.isEmpty()) {
             res = airportSearchService.exactCityAndCountrySearch(cityName, countryCode);
-            if (res == null && res.isEmpty()) {
+            if (res == null || res.isEmpty()) {
                 throw new CityException("Can't find such city or it don't have international airports. Let's try again.");
             }
             Set<String> cityNames = new HashSet<>();
@@ -42,14 +51,14 @@ public class Utils {
             if (cityNames.size() > 1) {
                 StringBuilder sb = new StringBuilder();
                 for (String city : cityNames) {
-                    sb.append(" " + city);
-                    sb.append(", " + countryCode + ";");
+                    sb.append(" ").append(city);
+                    sb.append(", ").append(countryCode).append(";");
                 }
                 String cities = sb.toString().trim();
                 throw new CityException(String.format("Found many cities. Type in your city: %s", cities.substring(0, cities.length() - 1)));
             }
             return res;
-        } else if (cityName != null && !cityName.isEmpty()) {
+        } else if (cityName != null && cityName.length() > 2) {
             res = airportSearchService.exactCitySearch(cityName);
             if (res == null || res.isEmpty()) {
                 res = airportSearchService.fuzzyCitySearch(cityName);
@@ -63,7 +72,7 @@ public class Utils {
                 if (options.size() > 1) {
                     StringBuilder sb = new StringBuilder();
                     for (String option : options) {
-                        sb.append(" " + option + ";");
+                        sb.append(" ").append(option).append(";");
                     }
                     String cities = sb.toString().trim();
                     throw new CityException(String.format("Found many cities. Type in your city: %s", cities.substring(0, cities.length() - 1)));
@@ -77,7 +86,7 @@ public class Utils {
             if (options.size() > 1) {
                 StringBuilder sb = new StringBuilder();
                 for (String option : options) {
-                    sb.append(" " + option + ";");
+                    sb.append(" ").append(option).append(";");
                 }
                 String cities = sb.toString().trim();
                 throw new CityException(String.format("Found many cities. Type in your city: %s", cities.substring(0, cities.length() - 1)));

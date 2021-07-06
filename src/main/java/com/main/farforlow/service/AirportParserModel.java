@@ -1,4 +1,4 @@
-package com.main.farforlow.digester.model;
+package com.main.farforlow.service;
 
 import com.main.farforlow.entity.Airport;
 import com.opencsv.bean.CsvToBeanBuilder;
@@ -10,7 +10,7 @@ import java.util.List;
 @Service
 public class AirportParserModel {
 
-    private final String fileName = "src/main/java/com/main/farforlow/digester/datasource/airports.csv";
+    private final String fileName = System.getenv("AIRPORTS_CSV_PATH");
 
     public List<Airport> getAirports() {
         try {

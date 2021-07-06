@@ -16,7 +16,7 @@ import java.util.Collections;
 @Service
 public class Messenger {
 
-    private final String url = "https://api.telegram.org/botYOUR_BOT_TOKEN/sendMessage";
+    private final String url = "https://api.telegram.org/bot" + System.getenv("BOT_TOKEN") + "/sendMessage";
     private final RestTemplate restTemplate;
 
     @Autowired
@@ -42,6 +42,6 @@ public class Messenger {
 
     public static void main(String[] args) {
         Messenger messenger = new Messenger(new RestTemplateBuilder());
-        messenger.sendMessage("148678", ServiceMessages.NO_BOTS.text);
+        messenger.sendMessage(System.getenv("BOT_OWNER_TELEGRAM_ID"), ServiceMessages.NO_BOTS.text);
     }
 }
