@@ -365,6 +365,24 @@ public class RequestController {
         return new ResponseEntity<>(userRequestsSummary, HttpStatus.OK);
     }
 
+    @PostMapping(value = "/requests/summary/{maxRequests}")
+    public ResponseEntity<UserRequestsSummary> updateSummary(@RequestHeader(name = "token") String token,
+                                                             @PathVariable(name = "maxRequests") String maxRequests) {
+        UserRequestsSummary userRequestsSummary = requestsSummaryDAL.getOne();
+        if (userRequestsSummary == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_MODIFIED);
+        } else {
+            try {
+                int max = Integer.parseInt(maxRequests);
+                userRequestsSummary.setMaxQuantityOfSearches(max);
+                requestsSummaryDAL.updateOne(userRequestsSummary);
+                return new ResponseEntity<>(userRequestsSummary, HttpStatus.OK);
+            } catch (Exception e) {
+                return new ResponseEntity<>(HttpStatus.NOT_MODIFIED);
+            }
+        }
+    }
+
     @GetMapping(value = "/requests/start")
     public void requestPerformanceStart(@RequestHeader(name = "token") String token) {
         userRequestsProcessor.requestsCalculation();
