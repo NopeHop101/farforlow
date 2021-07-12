@@ -163,7 +163,6 @@ public class Utils {
                 userRequest.getMaxTripDurationDays() != null && userRequest.getMaxTripDurationDays() >= userRequest.getMinTripDurationDays() &&
                 userRequest.getEarliestTripStartDate() != null && !userRequest.getEarliestTripStartDate().before(new Date()) &&
                 userRequest.getLatestReturnDate() != null && !userRequest.getLatestReturnDate().before(userRequest.getEarliestTripStartDate()) &&
-                userRequest.getUserName() != null && !userRequest.getUserName().isEmpty() &&
                 userRequest.getRequestsQuantity() != null && userRequest.getRequestsQuantity() > 0;
     }
 }

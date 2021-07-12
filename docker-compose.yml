@@ -1,7 +1,18 @@
 version: "3"
 services:
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - /home/ubuntu/caddy/Caddyfile:/etc/caddy/Caddyfile
+      - /home/ubuntu/caddy/data:/data
+      - /home/ubuntu/caddy/config:/config
   mongodb:
     image: mongo
+    volumes:
+      - /home/ubuntu/data:/data/db
   #your app name:
     image: #your image name
     ports:
