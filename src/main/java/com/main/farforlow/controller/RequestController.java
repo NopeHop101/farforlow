@@ -266,7 +266,7 @@ public class RequestController {
         } else if (userRequest.getSearchPeriod() == null) {
             List<Date> searchPeriod = new ArrayList<>();
             try {
-                searchPeriod = utils.getSearchPeriodDates(telegramMessage.getMessage().getText().trim(), userRequest.getMinTripDurationDays());
+                searchPeriod = utils.getSearchPeriodDates(telegramMessage.getMessage().getText().trim(), userRequest.getMaxTripDurationDays());
             } catch (SearchPeriodException e) {
                 messenger.sendMessage(userRequest.getTelegramUserId() != null ?
                         userRequest.getTelegramUserId() : userRequest.getTelegramGroupId(), e.getMessage());

@@ -34,8 +34,8 @@ public class UserRequestsProcessor {
         this.messenger = messenger;
     }
 
-    //Running requests daily starting at 2.01am
-    @Scheduled(cron = "0 1 2 * * ?")
+    //Running requests daily starting at 1.01am server time
+    @Scheduled(cron = "0 1 1 * * ?")
     public void requestsCalculation() {
         UserRequestsSummary userRequestsSummary = requestsSummaryDAL.getOne();
         if (userRequestsSummary == null) {
