@@ -3,8 +3,8 @@ package com.main.farforlow.view;
 public enum ServiceMessages {
     DEPARTURE_CITY("Enter departure city (e.g. Moscow):"),
     DESTINATION_CITY("Destination city (e.g. Berlin):"),
-    TRIP_DURATION("Trip duration, days (min-max e.g. 10-14):"),
-    SEARCH_PERIOD("Search period (e.g. 20.03.2030-20.05.2030):"),
+    TRIP_DURATION("Trip duration, days (min-max e.g. 7-10):"),
+    SEARCH_PERIOD("Search period (e.g. 20.03.2030-20.04.2030):"),
     REQUEST_FILLED("You are all set! Stay tuned for best deal of the day."),
     NO_BOTS("No bots please!"),
     STOP("OK. Let me know when you are ready to /start again."),

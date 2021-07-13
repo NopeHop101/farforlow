@@ -12,8 +12,6 @@ Back end written on Java. (users request processing and sending results back to 
 
 Search requests information is storied in mongodb.
 
-Search for cities and airports was implemented with elasticsearch.
-
 
 Deployment through Docker (see docker-compose.yml to add your settings)
 Bot in Telegram needs to be created with BotFather (see Telegram api documentation)
