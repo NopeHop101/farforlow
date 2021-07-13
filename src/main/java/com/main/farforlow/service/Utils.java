@@ -117,9 +117,9 @@ public class Utils {
         return res;
     }
 
-    public List<Date> getSearchPeriodDates(String searchPeriod, Integer minTripDuration) throws SearchPeriodException {
+    public List<Date> getSearchPeriodDates(String searchPeriod, Integer maxTripDuration) throws SearchPeriodException {
         List<Date> res = new ArrayList<>();
-        if (searchPeriod == null || minTripDuration == null) {
+        if (searchPeriod == null || maxTripDuration == null) {
             throw new SearchPeriodException();
         }
         String[] startEndDates = searchPeriod.trim().split("-");
@@ -136,7 +136,7 @@ public class Utils {
         LocalDateTime startDate = res.get(0).toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
         LocalDateTime endDate = res.get(1).toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
         long searchPeriodDays = Duration.between(startDate, endDate).toDays();
-        if (res.get(0).before(new Date()) || res.get(0).after(res.get(1)) || searchPeriodDays <= minTripDuration) {
+        if (res.get(0).before(new Date()) || res.get(0).after(res.get(1)) || searchPeriodDays <= maxTripDuration) {
             throw new SearchPeriodException();
         }
         return res;
