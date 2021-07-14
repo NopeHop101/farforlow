@@ -3,16 +3,25 @@ package com.main.farforlow.entity;
 import java.util.Date;
 
 public class Result implements Comparable<Result> {
-    private Integer priceGbp;
+    private Integer price;
+    private String currency;
     private String link;
     private Date offerDate;
 
-    public Integer getPriceGbp() {
-        return priceGbp;
+    public Integer getPrice() {
+        return price;
     }
 
-    public void setPriceGbp(Integer priceGbp) {
-        this.priceGbp = priceGbp;
+    public void setPrice(Integer price) {
+        this.price = price;
+    }
+
+    public String getCurrency() {
+        return currency;
+    }
+
+    public void setCurrency(String currency) {
+        this.currency = currency;
     }
 
     public String getLink() {
@@ -34,7 +43,8 @@ public class Result implements Comparable<Result> {
     @Override
     public String toString() {
         return "Result{" +
-                "price=" + priceGbp +
+                "price=" + price +
+                ", currency='" + currency + '\'' +
                 ", link='" + link + '\'' +
                 ", offerDate=" + offerDate +
                 '}';
@@ -42,6 +52,6 @@ public class Result implements Comparable<Result> {
 
     @Override
     public int compareTo(Result o) {
-        return this.priceGbp - o.priceGbp;
+        return this.price - o.price;
     }
 }

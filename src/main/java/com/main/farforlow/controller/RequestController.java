@@ -365,8 +365,8 @@ public class RequestController {
         return new ResponseEntity<>(userRequestsSummary, HttpStatus.OK);
     }
 
-    @PostMapping(value = "/requests/summary/{maxRequests}")
-    public ResponseEntity<UserRequestsSummary> updateSummary(@RequestHeader(name = "token") String token,
+    @PostMapping(value = "/requests/maxRequests/{maxRequests}")
+    public ResponseEntity<UserRequestsSummary> updateMaxRequests(@RequestHeader(name = "token") String token,
                                                              @PathVariable(name = "maxRequests") String maxRequests) {
         UserRequestsSummary userRequestsSummary = requestsSummaryDAL.getOne();
         if (userRequestsSummary == null) {
@@ -375,6 +375,24 @@ public class RequestController {
             try {
                 int max = Integer.parseInt(maxRequests);
                 userRequestsSummary.setMaxQuantityOfSearches(max);
+                requestsSummaryDAL.updateOne(userRequestsSummary);
+                return new ResponseEntity<>(userRequestsSummary, HttpStatus.OK);
+            } catch (Exception e) {
+                return new ResponseEntity<>(HttpStatus.NOT_MODIFIED);
+            }
+        }
+    }
+
+    @PostMapping(value = "/requests/currentRequests/{currentRequests}")
+    public ResponseEntity<UserRequestsSummary> updateCurrentRequests(@RequestHeader(name = "token") String token,
+                                                             @PathVariable(name = "currentRequests") String currentRequests) {
+        UserRequestsSummary userRequestsSummary = requestsSummaryDAL.getOne();
+        if (userRequestsSummary == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_MODIFIED);
+        } else {
+            try {
+                int current = Integer.parseInt(currentRequests);
+                userRequestsSummary.setCurrentQuantityOfSearches(current);
                 requestsSummaryDAL.updateOne(userRequestsSummary);
                 return new ResponseEntity<>(userRequestsSummary, HttpStatus.OK);
             } catch (Exception e) {

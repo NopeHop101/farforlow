@@ -94,16 +94,16 @@ public class UserRequestsProcessor {
                 if (userRequest.getBestPrice() != null && userRequest.getBestPrice() != 0) {
                     messenger.sendMessage(userRequest.getTelegramUserId() != null ?
                                     userRequest.getTelegramUserId() : userRequest.getTelegramGroupId(),
-                            String.format("Best offer of the day: %d GBP (%+d vs lowest ever found price). More details: %s",
-                                    result.getPriceGbp(), result.getPriceGbp() - userRequest.getBestPrice(), result.getLink()));
+                            String.format("Best offer of the day: %d %s (%+d vs lowest ever found price). More details: %s",
+                                    result.getPrice(), result.getCurrency(), result.getPrice() - userRequest.getBestPrice(), result.getLink()));
                 } else {
                     messenger.sendMessage(userRequest.getTelegramUserId() != null ?
                                     userRequest.getTelegramUserId() : userRequest.getTelegramGroupId(),
-                            String.format("Best offer of the day: %d GBP. More details: %s",
-                                    result.getPriceGbp(), result.getLink()));
+                            String.format("Best offer of the day: %d %s. More details: %s",
+                                    result.getPrice(), result.getCurrency(), result.getLink()));
                 }
-                if (userRequest.getBestPrice() == null || userRequest.getBestPrice() == 0 || result.getPriceGbp() < userRequest.getBestPrice()) {
-                    userRequest.setBestPrice(result.getPriceGbp());
+                if (userRequest.getBestPrice() == null || userRequest.getBestPrice() == 0 || result.getPrice() < userRequest.getBestPrice()) {
+                    userRequest.setBestPrice(result.getPrice());
                 }
                 List<Result> results = userRequest.getResults();
                 if (results == null) {

@@ -109,15 +109,14 @@ public class SkiplaggedClient {
                 return null;
             }
 
-            //Price in GBP
             String bestPrice;
             bestPrice = driver.findElement(By.cssSelector("div.span2.trip-cost.text-success")).getText();
 
-            res.setPriceGbp(priceCoversion(bestPrice));
+            priceCoversion(bestPrice, res);
             res.setLink(requestLink);
             res.setOfferDate(new Date());
 
-            log.info(request + ": " + randomProxy + ":" + proxies.get(randomProxy) + ": OK " + res.getPriceGbp());
+            log.info(request + ": " + randomProxy + ":" + proxies.get(randomProxy) + ": OK " + res.getPrice() + " " + bestPrice);
             driver.close();
 
             return res;
@@ -128,8 +127,9 @@ public class SkiplaggedClient {
         }
     }
 
-    private Integer priceCoversion(String price) {
-        return Integer.parseInt(price.trim().split("\n")[0].substring(1));
+    private void priceCoversion(String price, Result res) {
+        res.setCurrency("USD");
+        res.setPrice(Integer.parseInt(price.trim().split("\n")[0].substring(1).replaceAll(",", "")));
     }
 
     public static void main(String[] args) {
