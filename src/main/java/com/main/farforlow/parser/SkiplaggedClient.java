@@ -16,7 +16,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Service
@@ -41,90 +43,111 @@ public class SkiplaggedClient {
         String request = String.format("Request {departure airport: %s,  destination airport: %s, departure date: %s, return date: %s}",
                 departureAirport, destinationAirport, dateFormat.format(departureDate), dateFormat.format(returnDate));
         Result res = new Result();
-        int randomProxy = ThreadLocalRandom.current().nextInt(0, proxies.size());
 
-        System.setProperty("webdriver.chrome.driver", chromeDriverPath);
-        ChromeOptions options = new ChromeOptions();
-        options.addArguments(
-                "--verbose",
-                "--headless",
-                "--ignore-certificate-errors",
-                "--disable-web-security",
-                "--silent",
-                "--proxy-server=" + proxies.get(randomProxy),
-                "--allow-running-insecure-content",
-                "--allow-insecure-localhost",
-                "--no-sandbox",
-                "--disable-gpu",
-                "--window-size=1920,1200",
-                "--disable-dev-shm-usage",
-                "--disable-impl-side-painting",
-                "--disable-gpu-sandbox",
-                "--disable-accelerated-2d-canvas",
-                "--disable-accelerated-jpeg-decoding",
-                "--test-type=ui");
-        WebDriver driver = new ChromeDriver(options);
-        try {
-            String requestLink;
-            requestLink = String.format("https://skiplagged.com/flights/%s/%s/%s/%s",
-                    departureAirport, destinationAirport, dateFormat.format(departureDate), dateFormat.format(returnDate));
 
-            // Get the main page
-            driver.get(requestLink);
 
-            new WebDriverWait(driver, 20).until(d -> d.findElement(By.cssSelector("div.header-left")));
-
-            if (!driver.findElement(By.cssSelector("div.header-left")).isDisplayed()) {
-                driver.close();
-                return null;
+        for (int i = 3; i > 0; i--) {
+            if (i < 3) {
+                log.error(request + ": NEW ROUND DUE TO FAILURE");
             }
 
-            // 3 seconds waiting options from aggregator
+            int randomProxy = ThreadLocalRandom.current().nextInt(0, proxies.size());
+
+            System.setProperty("webdriver.chrome.driver", chromeDriverPath);
+            ChromeOptions options = new ChromeOptions();
+            options.addArguments(
+                    "--verbose",
+                    "--headless",
+                    "--ignore-certificate-errors",
+                    "--disable-web-security",
+                    "--silent",
+                    "--proxy-server=" + proxies.get(randomProxy),
+                    "--allow-running-insecure-content",
+                    "--allow-insecure-localhost",
+                    "--no-sandbox",
+                    "--disable-gpu",
+                    "--window-size=1920,1200",
+                    "--disable-dev-shm-usage",
+                    "--disable-impl-side-painting",
+                    "--disable-gpu-sandbox",
+                    "--disable-accelerated-2d-canvas",
+                    "--disable-accelerated-jpeg-decoding",
+                    "--test-type=ui");
+            WebDriver driver = new ChromeDriver(options);
             try {
-                Thread.sleep(5000);
-            } catch (Exception e) {
-                log.error(request + ": " + randomProxy + ":" + proxies.get(randomProxy) + ": skiplagged didn't load " + e.getMessage());
-            }
+                String requestLink;
+                requestLink = String.format("https://skiplagged.com/flights/%s/%s/%s/%s",
+                        departureAirport, destinationAirport, dateFormat.format(departureDate), dateFormat.format(returnDate));
 
-            // Exit is no options for this dates/ airports
-            String noOptions;
-            noOptions = driver.findElement(By.xpath("//*[@id='flights-container']")).getText();
-            if (noOptions.contains("No flights found.")) {
-                log.warn(request + ": " + randomProxy + ":" + proxies.get(randomProxy) + ": No flights found.");
+                // Get the main page
+                driver.get(requestLink);
+
+                new WebDriverWait(driver, 20).until(d -> d.findElement(By.cssSelector("div.header-left")));
+
+                if (!driver.findElement(By.cssSelector("div.header-left")).isDisplayed()) {
+                    driver.close();
+                    return res;
+                }
+
+                // 3 seconds waiting options from aggregator
+                try {
+                    Thread.sleep(5000);
+                } catch (Exception e) {
+                    log.error(request + ": " + randomProxy + ":" + proxies.get(randomProxy) + ": skiplagged didn't load " + e.getMessage());
+                }
+
+                // Exit is no options for this dates/ airports
+                String noOptions;
+                noOptions = driver.findElement(By.xpath("//*[@id='flights-container']")).getText();
+                if (noOptions.contains("No flights found.")) {
+                    log.warn(request + ": " + randomProxy + ":" + proxies.get(randomProxy) + ": No flights found.");
+                    driver.close();
+                    return res;
+                }
+
+                // 20 seconds waiting full options from aggregator
+                try {
+                    Thread.sleep(20000);
+                } catch (Exception e) {
+                }
+
+                // Exit is no options for this dates/ airports
+                noOptions = driver.findElement(By.xpath("//*[@id='flights-container']")).getText();
+                if (noOptions.contains("No flights found.")) {
+                    log.info(request + ": " + randomProxy + ":" + proxies.get(randomProxy) + ": No flights found.");
+                    driver.close();
+                    return res;
+                }
+
+                String bestPrice;
+                bestPrice = driver.findElement(By.cssSelector("div.span2.trip-cost.text-success")).getText();
+
+                priceCoversion(bestPrice, res);
+                res.setLink(requestLink);
+                res.setOfferDate(new Date());
+
+                if (i < 3) {
+                    res.setSecondAttemptSuccessCount(res.getSecondAttemptSuccessCount() + 1);
+                }
+
+                log.info(request + ": " + randomProxy + ":" + proxies.get(randomProxy) + ": OK " + res.getPrice() + " " + bestPrice);
                 driver.close();
-                return null;
-            }
 
-            // 20 seconds waiting full options from aggregator
-            try {
-                Thread.sleep(20000);
+                return res;
             } catch (Exception e) {
-            }
-
-            // Exit is no options for this dates/ airports
-            noOptions = driver.findElement(By.xpath("//*[@id='flights-container']")).getText();
-            if (noOptions.contains("No flights found.")) {
-                log.info(request + ": " + randomProxy + ":" + proxies.get(randomProxy) + ": No flights found.");
+                res.setFailuresCount(res.getFailuresCount() + 1);
+                if (res.getFailedProxies() == null) {
+                    Set<String> failedProxies = new HashSet<>();
+                    failedProxies.add(proxies.get(randomProxy));
+                    res.setFailedProxies(failedProxies);
+                } else {
+                    res.getFailedProxies().add(proxies.get(randomProxy));
+                }
+                log.error(request + ": " + randomProxy + ":" + proxies.get(randomProxy) + ": FAILED with " + e.getMessage());
                 driver.close();
-                return null;
             }
-
-            String bestPrice;
-            bestPrice = driver.findElement(By.cssSelector("div.span2.trip-cost.text-success")).getText();
-
-            priceCoversion(bestPrice, res);
-            res.setLink(requestLink);
-            res.setOfferDate(new Date());
-
-            log.info(request + ": " + randomProxy + ":" + proxies.get(randomProxy) + ": OK " + res.getPrice() + " " + bestPrice);
-            driver.close();
-
-            return res;
-        } catch (Exception e) {
-            log.error(request + ": " + randomProxy + ":" + proxies.get(randomProxy) + ": FAILED " + e.getMessage());
-            driver.close();
-            return null;
         }
+        return res;
     }
 
     private void priceCoversion(String price, Result res) {

@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 
 @EnableScheduling
@@ -43,6 +44,10 @@ public class UserRequestsProcessor {
             userRequestsSummary.setCurrentQuantityOfSearches(0);
             requestsSummaryDAL.createOne(userRequestsSummary);
         }
+        userRequestsSummary.setFailuresCount(0);
+        userRequestsSummary.setSecondAttemptSuccessCount(0);
+        userRequestsSummary.setFailedProxies(new HashSet<String>());
+        requestsSummaryDAL.updateOne(userRequestsSummary);
         List<UserRequest> activeRequests = requestDAL.getActive();
         if (activeRequests != null && !activeRequests.isEmpty()) {
             for (UserRequest userRequest : activeRequests) {
@@ -114,6 +119,6 @@ public class UserRequestsProcessor {
                 requestDAL.update(userRequest);
             }
         }
-        messenger.sendMessage(System.getenv("BOT_OWNER_TELEGRAM_ID"), "All users requests completed");
+        messenger.sendMessage(System.getenv("BOT_OWNER_TELEGRAM_ID"), requestsSummaryDAL.getOne().toString());
     }
 }
