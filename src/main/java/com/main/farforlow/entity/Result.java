@@ -1,12 +1,17 @@
 package com.main.farforlow.entity;
 
 import java.util.Date;
+import java.util.Set;
 
 public class Result implements Comparable<Result> {
     private Integer price;
     private String currency;
     private String link;
     private Date offerDate;
+
+    private Set<String> failedProxies;
+    private int failuresCount;
+    private int secondAttemptSuccessCount;
 
     public Integer getPrice() {
         return price;
@@ -38,6 +43,30 @@ public class Result implements Comparable<Result> {
 
     public void setOfferDate(Date offerDate) {
         this.offerDate = offerDate;
+    }
+
+    public Set<String> getFailedProxies() {
+        return failedProxies;
+    }
+
+    public void setFailedProxies(Set<String> failedProxies) {
+        this.failedProxies = failedProxies;
+    }
+
+    public int getFailuresCount() {
+        return failuresCount;
+    }
+
+    public void setFailuresCount(int failuresCount) {
+        this.failuresCount = failuresCount;
+    }
+
+    public int getSecondAttemptSuccessCount() {
+        return secondAttemptSuccessCount;
+    }
+
+    public void setSecondAttemptSuccessCount(int secondAttemptSuccessCount) {
+        this.secondAttemptSuccessCount = secondAttemptSuccessCount;
     }
 
     @Override

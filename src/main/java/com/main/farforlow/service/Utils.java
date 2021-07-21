@@ -151,7 +151,9 @@ public class Utils {
                 (userRequest.getMaxTripDurationDays() - userRequest.getMinTripDurationDays() + 1) *
                 ((int) searchPeriodDays - (userRequest.getMaxTripDurationDays() + userRequest.getMinTripDurationDays()) / 2 + 1);
         if (res > MAX_REQUESTS_NUMBER) {
-            throw new RequestsQuantityException();
+            throw new RequestsQuantityException(String.format(
+                    "Request is too loose :(. %d options need to be checked and current limit is %d options per request. Try more precise trip duration and/or search period.",
+                    res, MAX_REQUESTS_NUMBER));
         }
         return res;
     }

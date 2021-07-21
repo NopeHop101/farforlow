@@ -57,11 +57,14 @@ public class RequestController {
         if (telegramMessage == null) {
             return;
         }
-        if (telegramMessage.getMessage().getFrom().getBot()) {
-            messenger.sendMessage(telegramMessage.getMessage().getChat().getGroupId(), ServiceMessages.NO_BOTS.text);
+
+        if (telegramMessage.getMessage().getFrom().getBot() != null &&
+                telegramMessage.getMessage().getFrom().getBot()) {
+            return;
         }
         if (telegramMessage.getMessage().getChat().getType().equals("group") &&
-                !telegramMessage.getMessage().getText().startsWith("@farforlow_bot")) {
+                (telegramMessage.getMessage().getText() == null ||
+                !telegramMessage.getMessage().getText().startsWith("@farforlow_bot"))) {
             return;
         }
         if (telegramMessage.getMessage().getChat().getType().equals("group") &&
@@ -299,7 +302,7 @@ public class RequestController {
                 messenger.sendMessage(userRequest.getTelegramUserId() != null ?
                         userRequest.getTelegramUserId() : userRequest.getTelegramGroupId(), e.getMessage());
                 messenger.sendMessage(userRequest.getTelegramUserId() != null ?
-                        userRequest.getTelegramUserId() : userRequest.getTelegramGroupId(), ServiceMessages.SEARCH_PERIOD.text);
+                        userRequest.getTelegramUserId() : userRequest.getTelegramGroupId(), ServiceMessages.TRIP_DURATION.text);
                 return userRequest;
             }
         }

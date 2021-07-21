@@ -2,6 +2,9 @@ package com.main.farforlow.parser;
 
 import com.main.farforlow.entity.Result;
 import com.main.farforlow.entity.UserRequest;
+import com.main.farforlow.entity.UserRequestsSummary;
+import com.main.farforlow.mongo.RequestsSummaryDAL;
+import com.main.farforlow.mongo.RequestsSummaryDALImpl;
 import com.main.farforlow.service.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -12,7 +15,9 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -23,11 +28,17 @@ public class ParserModel {
 
     private final SkiplaggedClient skiplaggedClient;
     private final Utils utils;
+    private RequestsSummaryDAL requestsSummaryDAL;
+
+    private Set<String> failedProxies = new HashSet<>();
+    private int failuresCount;
+    private int secondAttemptSuccessCount;
 
     @Autowired
-    public ParserModel(SkiplaggedClient skiplaggedClient, Utils utils) {
+    public ParserModel(SkiplaggedClient skiplaggedClient, Utils utils, RequestsSummaryDAL requestsSummaryDAL) {
         this.skiplaggedClient = skiplaggedClient;
         this.utils = utils;
+        this.requestsSummaryDAL = requestsSummaryDAL;
     }
 
     public Result requestExecutor(UserRequest userRequest) {
@@ -56,18 +67,44 @@ public class ParserModel {
                 }
             }
         }
-        ExecutorService exec = Executors.newFixedThreadPool(4);
+        ExecutorService exec = Executors.newFixedThreadPool(2);
         try {
             List<Future<Result>> results = exec.invokeAll(tasks);
             for (Future<Result> fr : results) {
-                if (fr.get() != null) {
+                if (fr.get().getLink() != null && fr.get().getLink().length() > 0) {
                     res.add(fr.get());
+                }
+                if (fr.get().getFailedProxies() != null && !fr.get().getFailedProxies().isEmpty()) {
+                    failedProxies.addAll(fr.get().getFailedProxies());
+                }
+                if (fr.get().getFailuresCount() > 0) {
+                    failuresCount += fr.get().getFailuresCount();
+                }
+                if (fr.get().getSecondAttemptSuccessCount() > 0) {
+                    secondAttemptSuccessCount += fr.get().getSecondAttemptSuccessCount();
                 }
             }
         } catch (Exception e) {
         } finally {
             exec.shutdown();
         }
+
+        if (!failedProxies.isEmpty() || failuresCount > 0 || secondAttemptSuccessCount > 0) {
+            UserRequestsSummary userRequestsSummary = requestsSummaryDAL.getOne();
+            userRequestsSummary.setFailuresCount(userRequestsSummary.getFailuresCount() + failuresCount);
+            userRequestsSummary.setSecondAttemptSuccessCount(userRequestsSummary.getSecondAttemptSuccessCount() + secondAttemptSuccessCount);
+            if (!failedProxies.isEmpty()) {
+                if (userRequestsSummary.getFailedProxies() == null) {
+                    userRequestsSummary.setFailedProxies(failedProxies);
+                } else {
+                    userRequestsSummary.getFailedProxies().addAll(failedProxies);
+                }
+            }
+            requestsSummaryDAL.updateOne(userRequestsSummary);
+        }
+        failuresCount = 0;
+        secondAttemptSuccessCount = 0;
+
         if (res.isEmpty()) {
             return null;
         } else {
@@ -75,25 +112,4 @@ public class ParserModel {
         }
     }
 
-    public static void main(String[] args) {
-        ParserModel parserModel = new ParserModel(new SkiplaggedClient(), new Utils());
-        UserRequest userRequest = new UserRequest();
-        userRequest.setUserName("A");
-        userRequest.setRequestsQuantity(300);
-        userRequest.setMinTripDurationDays(10);
-        userRequest.setMaxTripDurationDays(12);
-        SimpleDateFormat formatter = new SimpleDateFormat("dd.MM.yyyy");
-        try {
-            userRequest.setEarliestTripStartDate(formatter.parse("10.11.2021"));
-            userRequest.setLatestReturnDate(formatter.parse("25.11.2021"));
-        } catch (Exception e) {
-        }
-        userRequest.setDepartureAirports(Arrays.asList("GVA"));
-        userRequest.setDestinationAirports(Arrays.asList("LHR", "LCY"));
-        long start = System.currentTimeMillis();
-        Result result = parserModel.requestExecutor(userRequest);
-        long elapsed = System.currentTimeMillis() - start;
-        System.out.println(String.format("Elapsed time: %d s", elapsed / 1000));
-        System.out.println(result);
-    }
 }
