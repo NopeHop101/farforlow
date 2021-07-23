@@ -95,11 +95,43 @@ public class RequestController {
                             userRequest.getTelegramUserId() : userRequest.getTelegramGroupId(), userRequest.toString());
                 }
                 break;
+            case "/queuing":
+                if (!telegramMessage.getMessage().getFrom().getUserId().equals(System.getenv("BOT_OWNER_TELEGRAM_ID"))) {
+                    messenger.sendMessage(telegramMessage.getMessage().getChat().getGroupId(),
+                            "Don't know such command or something went wrong. Let's try again or send /stop and then /start.");
+                } else {
+                    messenger.sendMessage(System.getenv("BOT_OWNER_TELEGRAM_ID"), requestDAL.getQueuing().toString());
+                }
+                break;
+            case "/active":
+                if (!telegramMessage.getMessage().getFrom().getUserId().equals(System.getenv("BOT_OWNER_TELEGRAM_ID"))) {
+                    messenger.sendMessage(telegramMessage.getMessage().getChat().getGroupId(),
+                            "Don't know such command or something went wrong. Let's try again or send /stop and then /start.");
+                } else {
+                    messenger.sendMessage(System.getenv("BOT_OWNER_TELEGRAM_ID"), requestDAL.getActive().toString());
+                }
+                break;
+            case "/incomplete":
+                if (!telegramMessage.getMessage().getFrom().getUserId().equals(System.getenv("BOT_OWNER_TELEGRAM_ID"))) {
+                    messenger.sendMessage(telegramMessage.getMessage().getChat().getGroupId(),
+                            "Don't know such command or something went wrong. Let's try again or send /stop and then /start.");
+                } else {
+                    messenger.sendMessage(System.getenv("BOT_OWNER_TELEGRAM_ID"), requestDAL.getIncomplete().toString());
+                }
+                break;
+            case "/summary":
+                if (!telegramMessage.getMessage().getFrom().getUserId().equals(System.getenv("BOT_OWNER_TELEGRAM_ID"))) {
+                    messenger.sendMessage(telegramMessage.getMessage().getChat().getGroupId(),
+                            "Don't know such command or something went wrong. Let's try again or send /stop and then /start.");
+                } else {
+                    messenger.sendMessage(System.getenv("BOT_OWNER_TELEGRAM_ID"), requestsSummaryDAL.getOne().toString());
+                }
+                break;
             default:
                 userRequest = update(telegramMessage);
                 if (userRequest == null) {
                     messenger.sendMessage(telegramMessage.getMessage().getChat().getGroupId(),
-                            "Something went wrong. Let's try again: send /stop and then /start.");
+                            "Don't know such command or something went wrong. Let's try again or send /stop and then /start.");
                 }
                 break;
         }

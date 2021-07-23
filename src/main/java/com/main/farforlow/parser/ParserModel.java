@@ -22,6 +22,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 @Service
 public class ParserModel {
@@ -41,7 +42,7 @@ public class ParserModel {
         this.requestsSummaryDAL = requestsSummaryDAL;
     }
 
-    public Result requestExecutor(UserRequest userRequest) {
+    public List<Result> requestExecutor(UserRequest userRequest) {
         List<Result> res = new ArrayList<>();
         if (!utils.isRequestInformationFull(userRequest)) {
             return null;
@@ -104,12 +105,13 @@ public class ParserModel {
         }
         failuresCount = 0;
         secondAttemptSuccessCount = 0;
+        failedProxies = new HashSet<>();
 
         if (res.isEmpty()) {
             return null;
         } else {
-            return res.stream().min(Result::compareTo).get();
+//            return res.stream().min(Result::compareTo).get();
+            return res.stream().sorted(Result::compareTo).collect(Collectors.toList());
         }
     }
-
 }
