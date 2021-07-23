@@ -90,12 +90,14 @@ public class UserRequestsProcessor {
         activeRequests = requestDAL.getActive();
         if (activeRequests != null && !activeRequests.isEmpty()) {
             for (UserRequest userRequest : activeRequests) {
-                Result result = parserModel.requestExecutor(userRequest);
-                if (result == null) {
+                List<Result> results = parserModel.requestExecutor(userRequest);
+                if (results == null) {
                     messenger.sendMessage(userRequest.getTelegramUserId() != null ?
                             userRequest.getTelegramUserId() : userRequest.getTelegramGroupId(), ServiceMessages.NOTHING_FOUND.text);
                     continue;
                 }
+
+                Result result = results.get(0);
                 if (userRequest.getBestPrice() != null && userRequest.getBestPrice() != 0) {
                     messenger.sendMessage(userRequest.getTelegramUserId() != null ?
                                     userRequest.getTelegramUserId() : userRequest.getTelegramGroupId(),
@@ -110,13 +112,26 @@ public class UserRequestsProcessor {
                 if (userRequest.getBestPrice() == null || userRequest.getBestPrice() == 0 || result.getPrice() < userRequest.getBestPrice()) {
                     userRequest.setBestPrice(result.getPrice());
                 }
-                List<Result> results = userRequest.getResults();
-                if (results == null) {
-                    results = new ArrayList<>();
+                List<Result> previousResults = userRequest.getResults();
+                if (previousResults == null) {
+                    previousResults = new ArrayList<>();
                 }
-                results.add(result);
-                userRequest.setResults(results);
+                previousResults.add(result);
+                userRequest.setResults(previousResults);
                 requestDAL.update(userRequest);
+
+                if (results.size() > 1) {
+                    StringBuilder message = new StringBuilder();
+                    message.append("Few closest offers for other dates:\n");
+                    int size = results.size() <= 3 ? results.size() : 4;
+                    for (int i = 1; i < size; i++) {
+                        message.append(String.format("%d: %d %s. More details: %s\n",
+                                i, results.get(i).getPrice(), results.get(i).getCurrency(), results.get(i).getLink()));
+                    }
+                    messenger.sendMessage(userRequest.getTelegramUserId() != null ?
+                                    userRequest.getTelegramUserId() : userRequest.getTelegramGroupId(),
+                            message.toString());
+                }
             }
         }
         messenger.sendMessage(System.getenv("BOT_OWNER_TELEGRAM_ID"), requestsSummaryDAL.getOne().toString());
