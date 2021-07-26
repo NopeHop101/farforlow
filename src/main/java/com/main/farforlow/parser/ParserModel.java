@@ -68,7 +68,7 @@ public class ParserModel {
                 }
             }
         }
-        ExecutorService exec = Executors.newFixedThreadPool(2);
+        ExecutorService exec = Executors.newFixedThreadPool(1);
         try {
             List<Future<Result>> results = exec.invokeAll(tasks);
             for (Future<Result> fr : results) {
