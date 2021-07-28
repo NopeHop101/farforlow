@@ -12,7 +12,7 @@ public enum ServiceMessages {
     NO_REQUSTS("No requests at the moment. Send /start."),
     REQUST_EXPIRED("Your request has expired. Hope you found tickets to your dream destination! Send /start for new request."),
     REQUST_QUEUING("Thank you for your patience. This is non-commercial project with limited resources and currently server capacity is fully utilized by requests from other users. Requests in front of you: "),
-    NOTHING_FOUND("No options found for your flight today.");
+    NOTHING_FOUND("No options found for your flight today. Also might be that data source doesn't have this connection. If you keep receiving this message try to change your search parameters.");
 
     public final String text;
 

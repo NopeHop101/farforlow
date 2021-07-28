@@ -64,30 +64,25 @@ public class ParserModel {
                             }
                         };
                         tasks.add(c);
+                        if (tasks.size() == 30) {
+                            executor(res, tasks);
+                            tasks = new ArrayList<Callable<Result>>();
+                            try {
+                                Thread.sleep(100000);
+                            } catch (Exception e) {
+                            }
+                        }
                     }
                 }
             }
         }
-        ExecutorService exec = Executors.newFixedThreadPool(1);
-        try {
-            List<Future<Result>> results = exec.invokeAll(tasks);
-            for (Future<Result> fr : results) {
-                if (fr.get().getLink() != null && fr.get().getLink().length() > 0) {
-                    res.add(fr.get());
-                }
-                if (fr.get().getFailedProxies() != null && !fr.get().getFailedProxies().isEmpty()) {
-                    failedProxies.addAll(fr.get().getFailedProxies());
-                }
-                if (fr.get().getFailuresCount() > 0) {
-                    failuresCount += fr.get().getFailuresCount();
-                }
-                if (fr.get().getSecondAttemptSuccessCount() > 0) {
-                    secondAttemptSuccessCount += fr.get().getSecondAttemptSuccessCount();
-                }
+
+        if (!tasks.isEmpty()) {
+            executor(res, tasks);
+            try {
+                Thread.sleep(100000);
+            } catch (Exception e) {
             }
-        } catch (Exception e) {
-        } finally {
-            exec.shutdown();
         }
 
         if (!failedProxies.isEmpty() || failuresCount > 0 || secondAttemptSuccessCount > 0) {
@@ -110,8 +105,31 @@ public class ParserModel {
         if (res.isEmpty()) {
             return null;
         } else {
-//            return res.stream().min(Result::compareTo).get();
             return res.stream().sorted(Result::compareTo).collect(Collectors.toList());
+        }
+    }
+
+    private void executor(List<Result> res, List<Callable<Result>> tasks) {
+        ExecutorService exec = Executors.newFixedThreadPool(2);
+        try {
+            List<Future<Result>> results = exec.invokeAll(tasks);
+            for (Future<Result> fr : results) {
+                if (fr.get().getLink() != null && fr.get().getLink().length() > 0) {
+                    res.add(fr.get());
+                }
+                if (fr.get().getFailedProxies() != null && !fr.get().getFailedProxies().isEmpty()) {
+                    failedProxies.addAll(fr.get().getFailedProxies());
+                }
+                if (fr.get().getFailuresCount() > 0) {
+                    failuresCount += fr.get().getFailuresCount();
+                }
+                if (fr.get().getSecondAttemptSuccessCount() > 0) {
+                    secondAttemptSuccessCount += fr.get().getSecondAttemptSuccessCount();
+                }
+            }
+        } catch (Exception e) {
+        } finally {
+            exec.shutdown();
         }
     }
 }
