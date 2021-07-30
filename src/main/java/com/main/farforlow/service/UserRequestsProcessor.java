@@ -92,8 +92,10 @@ public class UserRequestsProcessor {
             for (UserRequest userRequest : activeRequests) {
                 List<Result> results = parserModel.requestExecutor(userRequest);
                 if (results == null) {
+                    userRequest.setStatus(Status.DELETED);
+                    requestDAL.update(userRequest);
                     messenger.sendMessage(userRequest.getTelegramUserId() != null ?
-                            userRequest.getTelegramUserId() : userRequest.getTelegramGroupId(), ServiceMessages.NOTHING_FOUND.text);
+                            userRequest.getTelegramUserId() : userRequest.getTelegramGroupId(), ServiceMessages.CLOSE_REQUST.text);
                     continue;
                 }
 
