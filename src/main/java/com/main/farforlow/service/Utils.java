@@ -6,6 +6,7 @@ import com.main.farforlow.exception.CityException;
 import com.main.farforlow.exception.DurationException;
 import com.main.farforlow.exception.RequestsQuantityException;
 import com.main.farforlow.exception.SearchPeriodException;
+import com.main.farforlow.view.ServiceMessages;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -42,7 +43,7 @@ public class Utils {
         if (cityName != null && cityName.length() > 2 && countryCode != null && !countryCode.isEmpty()) {
             res = airportSearchService.exactCityAndCountrySearch(cityName, countryCode);
             if (res == null || res.isEmpty()) {
-                throw new CityException("Can't find such city or it don't have international airports. Let's try again.");
+                throw new CityException(ServiceMessages.CITY_EXCEPTION_NO_OPTIONS.text);
             }
             Set<String> cityNames = new HashSet<>();
             for (Airport airport : res) {
@@ -55,7 +56,7 @@ public class Utils {
                     sb.append(", ").append(countryCode).append(";");
                 }
                 String cities = sb.toString().trim();
-                throw new CityException(String.format("Found many cities. Type in your city: %s", cities.substring(0, cities.length() - 1)));
+                throw new CityException(String.format(ServiceMessages.CITY_EXCEPTION_WITH_OPTIONS.text, cities.substring(0, cities.length() - 1)));
             }
             return res;
         } else if (cityName != null && cityName.length() > 2) {
@@ -63,7 +64,7 @@ public class Utils {
             if (res == null || res.isEmpty()) {
                 res = airportSearchService.fuzzyCitySearch(cityName);
                 if (res == null || res.isEmpty()) {
-                    throw new CityException("Can't find such city or it don't have international airports. Let's try again.");
+                    throw new CityException(ServiceMessages.CITY_EXCEPTION_NO_OPTIONS.text);
                 }
                 Set<String> options = new HashSet<>();
                 for (Airport airport : res) {
@@ -75,7 +76,7 @@ public class Utils {
                         sb.append(" ").append(option).append(";");
                     }
                     String cities = sb.toString().trim();
-                    throw new CityException(String.format("Found many cities. Type in your city: %s", cities.substring(0, cities.length() - 1)));
+                    throw new CityException(String.format(ServiceMessages.CITY_EXCEPTION_WITH_OPTIONS.text, cities.substring(0, cities.length() - 1)));
                 }
                 return res;
             }
@@ -89,11 +90,11 @@ public class Utils {
                     sb.append(" ").append(option).append(";");
                 }
                 String cities = sb.toString().trim();
-                throw new CityException(String.format("Found many cities. Type in your city: %s", cities.substring(0, cities.length() - 1)));
+                throw new CityException(String.format(ServiceMessages.CITY_EXCEPTION_WITH_OPTIONS.text, cities.substring(0, cities.length() - 1)));
             }
             return res;
         }
-        throw new CityException("Can't find such city or it doesn't have international airports. Let's try again.");
+        throw new CityException(ServiceMessages.CITY_EXCEPTION_NO_OPTIONS.text);
     }
 
     public List<Integer> getDurationDays(String tripDuration) throws DurationException {
@@ -117,9 +118,9 @@ public class Utils {
         return res;
     }
 
-    public List<Date> getSearchPeriodDates(String searchPeriod, Integer maxTripDuration) throws SearchPeriodException {
+    public List<Date> getSearchPeriodDates(String searchPeriod, UserRequest userRequest) throws SearchPeriodException {
         List<Date> res = new ArrayList<>();
-        if (searchPeriod == null || maxTripDuration == null) {
+        if (searchPeriod == null || userRequest.getMinTripDurationDays() == null || userRequest.getMaxTripDurationDays() == null) {
             throw new SearchPeriodException();
         }
         String[] startEndDates = searchPeriod.trim().split("-");
@@ -136,9 +137,22 @@ public class Utils {
         LocalDateTime startDate = res.get(0).toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
         LocalDateTime endDate = res.get(1).toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
         long searchPeriodDays = Duration.between(startDate, endDate).toDays();
-        if (res.get(0).before(new Date()) || res.get(0).after(res.get(1)) || searchPeriodDays <= maxTripDuration) {
+        if (res.get(0).before(new Date()) || res.get(0).after(res.get(1))) {
             throw new SearchPeriodException();
         }
+
+        if (searchPeriodDays < userRequest.getMaxTripDurationDays()) {
+            userRequest.setMaxTripDurationDays((int) searchPeriodDays);
+        }
+        if (userRequest.getMinTripDurationDays() > userRequest.getMaxTripDurationDays()) {
+            if (userRequest.getMaxTripDurationDays() > 0) {
+                userRequest.setMinTripDurationDays(userRequest.getMaxTripDurationDays() - 1);
+            } else {
+                userRequest.setMinTripDurationDays(0);
+            }
+        }
+        userRequest.setTripDuration(userRequest.getMinTripDurationDays() + "-" + userRequest.getMaxTripDurationDays());
+
         return res;
     }
 
@@ -152,7 +166,7 @@ public class Utils {
                 ((int) searchPeriodDays - (userRequest.getMaxTripDurationDays() + userRequest.getMinTripDurationDays()) / 2 + 1);
         if (res > MAX_REQUESTS_NUMBER) {
             throw new RequestsQuantityException(String.format(
-                    "Request is too loose :(. %d options need to be checked and current limit is %d options per request. Try more precise trip duration and/or search period.",
+                    ServiceMessages.REQUESTS_QUANTITIES_EXCEPTION.text,
                     res, MAX_REQUESTS_NUMBER));
         }
         return res;

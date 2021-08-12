@@ -1,7 +1,9 @@
 package com.main.farforlow.exception;
 
+import com.main.farforlow.view.ServiceMessages;
+
 public class DurationException extends Exception {
     public DurationException() {
-        super("Please use the format: 12-14");
+        super(ServiceMessages.DURATION_EXCEPTION.text);
     }
 }
