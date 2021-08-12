@@ -103,12 +103,12 @@ public class UserRequestsProcessor {
                 if (userRequest.getBestPrice() != null && userRequest.getBestPrice() != 0) {
                     messenger.sendMessage(userRequest.getTelegramUserId() != null ?
                                     userRequest.getTelegramUserId() : userRequest.getTelegramGroupId(),
-                            String.format("Best offer of the day: %d %s (%+d vs lowest ever found price). More details: %s",
+                            String.format(ServiceMessages.DAILY_OFFER_VS_BEST.text,
                                     result.getPrice(), result.getCurrency(), result.getPrice() - userRequest.getBestPrice(), result.getLink()));
                 } else {
                     messenger.sendMessage(userRequest.getTelegramUserId() != null ?
                                     userRequest.getTelegramUserId() : userRequest.getTelegramGroupId(),
-                            String.format("Best offer of the day: %d %s. More details: %s",
+                            String.format(ServiceMessages.DAILY_OFFER.text,
                                     result.getPrice(), result.getCurrency(), result.getLink()));
                 }
                 if (userRequest.getBestPrice() == null || userRequest.getBestPrice() == 0 || result.getPrice() < userRequest.getBestPrice()) {
@@ -124,10 +124,10 @@ public class UserRequestsProcessor {
 
                 if (results.size() > 1) {
                     StringBuilder message = new StringBuilder();
-                    message.append("Few closest offers for other dates:\n");
+                    message.append(ServiceMessages.OTHER_OFFERS_HEADER.text);
                     int size = results.size() <= 3 ? results.size() : 4;
                     for (int i = 1; i < size; i++) {
-                        message.append(String.format("%d: %d %s. More details: %s\n",
+                        message.append(String.format(ServiceMessages.OTHER_OFFER.text,
                                 i, results.get(i).getPrice(), results.get(i).getCurrency(), results.get(i).getLink()));
                     }
                     messenger.sendMessage(userRequest.getTelegramUserId() != null ?

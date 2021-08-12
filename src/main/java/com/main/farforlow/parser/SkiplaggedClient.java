@@ -44,8 +44,6 @@ public class SkiplaggedClient {
                 departureAirport, destinationAirport, dateFormat.format(departureDate), dateFormat.format(returnDate));
         Result res = new Result();
 
-
-
         for (int i = 3; i > 0; i--) {
             if (i < 3) {
                 log.error(request + ": NEW ROUND DUE TO FAILURE");
@@ -85,7 +83,7 @@ public class SkiplaggedClient {
                 new WebDriverWait(driver, 20).until(d -> d.findElement(By.cssSelector("div.header-left")));
 
                 if (!driver.findElement(By.cssSelector("div.header-left")).isDisplayed()) {
-                    driver.close();
+                    driver.quit();
                     return res;
                 }
 
@@ -101,7 +99,7 @@ public class SkiplaggedClient {
                 noOptions = driver.findElement(By.xpath("//*[@id='flights-container']")).getText();
                 if (noOptions.contains("No flights found.")) {
                     log.warn(request + ": " + randomProxy + ":" + proxies.get(randomProxy) + ": No flights found.");
-                    driver.close();
+                    driver.quit();
                     return res;
                 }
 
@@ -115,7 +113,7 @@ public class SkiplaggedClient {
                 noOptions = driver.findElement(By.xpath("//*[@id='flights-container']")).getText();
                 if (noOptions.contains("No flights found.")) {
                     log.info(request + ": " + randomProxy + ":" + proxies.get(randomProxy) + ": No flights found.");
-                    driver.close();
+                    driver.quit();
                     return res;
                 }
 
@@ -131,7 +129,7 @@ public class SkiplaggedClient {
                 }
 
                 log.info(request + ": " + randomProxy + ":" + proxies.get(randomProxy) + ": OK " + res.getPrice() + " " + bestPrice);
-                driver.close();
+                driver.quit();
 
                 return res;
             } catch (Exception e) {
@@ -144,7 +142,7 @@ public class SkiplaggedClient {
                     res.getFailedProxies().add(proxies.get(randomProxy));
                 }
                 log.error(request + ": " + randomProxy + ":" + proxies.get(randomProxy) + ": FAILED with " + e.getMessage());
-                driver.close();
+                driver.quit();
             }
         }
         return res;

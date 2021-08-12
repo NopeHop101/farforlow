@@ -12,6 +12,7 @@ import com.main.farforlow.exception.SearchPeriodException;
 import com.main.farforlow.mongo.RequestDAL;
 import com.main.farforlow.mongo.RequestsSummaryDAL;
 import com.main.farforlow.service.Messenger;
+import com.main.farforlow.service.TelegramCommandsProcessor;
 import com.main.farforlow.service.UserRequestsProcessor;
 import com.main.farforlow.service.Utils;
 import com.main.farforlow.view.ServiceMessages;
@@ -36,16 +37,16 @@ import java.util.List;
 public class RequestController {
     private RequestDAL requestDAL;
     private RequestsSummaryDAL requestsSummaryDAL;
-    private Utils utils;
+    private TelegramCommandsProcessor telegramCommandsProcessor;
     private Messenger messenger;
     private UserRequestsProcessor userRequestsProcessor;
 
     @Autowired
-    public RequestController(RequestDAL requestDAL, RequestsSummaryDAL requestsSummaryDAL, Utils utils,
+    public RequestController(RequestDAL requestDAL, RequestsSummaryDAL requestsSummaryDAL, TelegramCommandsProcessor telegramCommandsProcessor,
                              Messenger messenger, UserRequestsProcessor userRequestsProcessor) {
         this.requestDAL = requestDAL;
         this.requestsSummaryDAL = requestsSummaryDAL;
-        this.utils = utils;
+        this.telegramCommandsProcessor = telegramCommandsProcessor;
         this.messenger = messenger;
         this.userRequestsProcessor = userRequestsProcessor;
     }
@@ -75,19 +76,19 @@ public class RequestController {
         UserRequest userRequest = null;
         switch (telegramMessage.getMessage().getText().trim()) {
             case "/stop":
-                if (delete(telegramMessage)) {
+                if (telegramCommandsProcessor.delete(telegramMessage)) {
                     messenger.sendMessage(telegramMessage.getMessage().getChat().getGroupId(), ServiceMessages.STOP.text);
                 }
                 break;
             case "/start":
-                if (create(telegramMessage)) {
+                if (telegramCommandsProcessor.create(telegramMessage)) {
                     messenger.sendMessage(telegramMessage.getMessage().getChat().getGroupId(), ServiceMessages.DEPARTURE_CITY.text);
                 } else {
                     messenger.sendMessage(telegramMessage.getMessage().getChat().getGroupId(), ServiceMessages.REQUST_EXISTS.text);
                 }
                 break;
             case "/help":
-                userRequest = help(telegramMessage);
+                userRequest = telegramCommandsProcessor.help(telegramMessage);
                 if (userRequest == null) {
                     messenger.sendMessage(telegramMessage.getMessage().getChat().getGroupId(), ServiceMessages.NO_REQUSTS.text);
                 } else {
@@ -98,7 +99,7 @@ public class RequestController {
             case "/queuing":
                 if (!telegramMessage.getMessage().getFrom().getUserId().equals(System.getenv("BOT_OWNER_TELEGRAM_ID"))) {
                     messenger.sendMessage(telegramMessage.getMessage().getChat().getGroupId(),
-                            "Don't know such command or something went wrong. Let's try again or send /stop and then /start.");
+                            ServiceMessages.NO_SUCH_COMMAND.text);
                 } else {
                     messenger.sendMessage(System.getenv("BOT_OWNER_TELEGRAM_ID"), requestDAL.getQueuing().toString());
                 }
@@ -106,7 +107,7 @@ public class RequestController {
             case "/active":
                 if (!telegramMessage.getMessage().getFrom().getUserId().equals(System.getenv("BOT_OWNER_TELEGRAM_ID"))) {
                     messenger.sendMessage(telegramMessage.getMessage().getChat().getGroupId(),
-                            "Don't know such command or something went wrong. Let's try again or send /stop and then /start.");
+                            ServiceMessages.NO_SUCH_COMMAND.text);
                 } else {
                     messenger.sendMessage(System.getenv("BOT_OWNER_TELEGRAM_ID"), requestDAL.getActive().toString());
                 }
@@ -114,7 +115,7 @@ public class RequestController {
             case "/incomplete":
                 if (!telegramMessage.getMessage().getFrom().getUserId().equals(System.getenv("BOT_OWNER_TELEGRAM_ID"))) {
                     messenger.sendMessage(telegramMessage.getMessage().getChat().getGroupId(),
-                            "Don't know such command or something went wrong. Let's try again or send /stop and then /start.");
+                            ServiceMessages.NO_SUCH_COMMAND.text);
                 } else {
                     messenger.sendMessage(System.getenv("BOT_OWNER_TELEGRAM_ID"), requestDAL.getIncomplete().toString());
                 }
@@ -122,223 +123,19 @@ public class RequestController {
             case "/summary":
                 if (!telegramMessage.getMessage().getFrom().getUserId().equals(System.getenv("BOT_OWNER_TELEGRAM_ID"))) {
                     messenger.sendMessage(telegramMessage.getMessage().getChat().getGroupId(),
-                            "Don't know such command or something went wrong. Let's try again or send /stop and then /start.");
+                            ServiceMessages.NO_SUCH_COMMAND.text);
                 } else {
                     messenger.sendMessage(System.getenv("BOT_OWNER_TELEGRAM_ID"), requestsSummaryDAL.getOne().toString());
                 }
                 break;
             default:
-                userRequest = update(telegramMessage);
+                userRequest = telegramCommandsProcessor.update(telegramMessage);
                 if (userRequest == null) {
                     messenger.sendMessage(telegramMessage.getMessage().getChat().getGroupId(),
-                            "Don't know such command or something went wrong. Let's try again or send /stop and then /start.");
+                            ServiceMessages.NO_SUCH_COMMAND.text);
                 }
                 break;
         }
-    }
-
-    private Boolean delete(TelegramMessage telegramMessage) {
-        UserRequest userRequest = null;
-        if (telegramMessage.getMessage().getChat().getType() != null &&
-                telegramMessage.getMessage().getChat().getType().equals("group") &&
-                telegramMessage.getMessage().getChat().getGroupId() != null) {
-            userRequest = requestDAL.findByGroupIdAndNotDeleted(telegramMessage.getMessage().getChat().getGroupId());
-        } else if (telegramMessage.getMessage().getFrom().getUserId() != null) {
-            userRequest = requestDAL.findByUserIdAndNotDeleted(telegramMessage.getMessage().getFrom().getUserId());
-        }
-        if (userRequest == null) {
-            return false;
-        } else {
-            if (userRequest.getStatus().equals(Status.ACTIVE)) {
-                UserRequestsSummary userRequestsSummary = requestsSummaryDAL.getOne();
-                if (userRequestsSummary != null) {
-                    userRequestsSummary.setCurrentQuantityOfSearches(userRequestsSummary.getCurrentQuantityOfSearches() - userRequest.getRequestsQuantity());
-                    requestsSummaryDAL.updateOne(userRequestsSummary);
-                }
-            }
-            userRequest.setStatus(Status.DELETED);
-            requestDAL.update(userRequest);
-            return true;
-        }
-    }
-
-    private Boolean create(TelegramMessage telegramMessage) {
-        UserRequest userRequest = null;
-        if (telegramMessage.getMessage().getChat().getType() != null &&
-                telegramMessage.getMessage().getChat().getType().equals("group") &&
-                telegramMessage.getMessage().getChat().getGroupId() != null) {
-            userRequest = requestDAL.findByGroupIdAndNotDeleted(telegramMessage.getMessage().getChat().getGroupId());
-            if (userRequest != null) {
-                return false;
-            }
-            userRequest = new UserRequest();
-            userRequest.setTelegramGroupId(telegramMessage.getMessage().getChat().getGroupId());
-            userRequest.setUserName(telegramMessage.getMessage().getChat().getTitle());
-        } else if (telegramMessage.getMessage().getFrom().getUserId() != null) {
-            userRequest = requestDAL.findByUserIdAndNotDeleted(telegramMessage.getMessage().getFrom().getUserId());
-            if (userRequest != null) {
-                return false;
-            }
-            userRequest = new UserRequest();
-            userRequest.setTelegramUserId(telegramMessage.getMessage().getFrom().getUserId());
-            userRequest.setUserName(telegramMessage.getMessage().getFrom().getUserName());
-            userRequest.setFirstName(telegramMessage.getMessage().getFrom().getFirstName());
-            userRequest.setLastName(telegramMessage.getMessage().getFrom().getLastName());
-        } else {
-            return false;
-        }
-        userRequest.setStatus(Status.INCOMPLETE);
-        requestDAL.update(userRequest);
-        return true;
-    }
-
-    private UserRequest help(TelegramMessage telegramMessage) {
-        UserRequest userRequest = null;
-        if (telegramMessage.getMessage().getChat().getType() != null &&
-                telegramMessage.getMessage().getChat().getType().equals("group") &&
-                telegramMessage.getMessage().getChat().getGroupId() != null) {
-            userRequest = requestDAL.findByGroupIdAndNotDeleted(telegramMessage.getMessage().getChat().getGroupId());
-        } else if (telegramMessage.getMessage().getFrom().getUserId() != null) {
-            userRequest = requestDAL.findByUserIdAndNotDeleted(telegramMessage.getMessage().getFrom().getUserId());
-        }
-        return userRequest;
-    }
-
-    private UserRequest update(TelegramMessage telegramMessage) {
-        UserRequest userRequest = null;
-        if (telegramMessage.getMessage().getChat().getType() != null &&
-                telegramMessage.getMessage().getChat().getType().equals("group") &&
-                telegramMessage.getMessage().getChat().getGroupId() != null) {
-            userRequest = requestDAL.findByGroupIdAndIncomplete(telegramMessage.getMessage().getChat().getGroupId());
-        } else if (telegramMessage.getMessage().getFrom().getUserId() != null) {
-            userRequest = requestDAL.findByUserIdAndIncomplete(telegramMessage.getMessage().getFrom().getUserId());
-        }
-        if (userRequest == null) {
-            return null;
-        }
-        if (userRequest.getDepartureCity() == null) {
-            String city = null;
-            String country = null;
-            if (telegramMessage.getMessage().getText() != null && telegramMessage.getMessage().getText().contains(",")) {
-                city = telegramMessage.getMessage().getText().split(",")[0].trim();
-                country = telegramMessage.getMessage().getText().split(",")[1].trim();
-            } else {
-                city = telegramMessage.getMessage().getText().trim();
-            }
-            List<Airport> airports = new ArrayList<>();
-            try {
-                airports = utils.getAirports(city, country);
-            } catch (CityException e) {
-                messenger.sendMessage(userRequest.getTelegramUserId() != null ?
-                        userRequest.getTelegramUserId() : userRequest.getTelegramGroupId(), e.getMessage());
-                messenger.sendMessage(userRequest.getTelegramUserId() != null ?
-                        userRequest.getTelegramUserId() : userRequest.getTelegramGroupId(), ServiceMessages.DEPARTURE_CITY.text);
-                return userRequest;
-            }
-            List<String> iataCodes = new ArrayList<>();
-            for (Airport airport : airports) {
-                iataCodes.add(airport.getCodeIata());
-                city = airport.getCity();
-                country = airport.getCountryCode();
-            }
-            userRequest.setDepartureCity(city);
-            userRequest.setDepartureCountry(country);
-            userRequest.setDepartureAirports(iataCodes);
-            requestDAL.update(userRequest);
-            messenger.sendMessage(userRequest.getTelegramUserId() != null ?
-                    userRequest.getTelegramUserId() : userRequest.getTelegramGroupId(), ServiceMessages.DESTINATION_CITY.text);
-            return userRequest;
-        } else if (userRequest.getDestinationCity() == null) {
-            String city = null;
-            String country = null;
-            if (telegramMessage.getMessage().getText() != null && telegramMessage.getMessage().getText().contains(",")) {
-                city = telegramMessage.getMessage().getText().split(",")[0].trim();
-                country = telegramMessage.getMessage().getText().split(",")[1].trim();
-            } else {
-                city = telegramMessage.getMessage().getText().trim();
-            }
-            List<Airport> airports = new ArrayList<>();
-            try {
-                airports = utils.getAirports(city, country);
-            } catch (CityException e) {
-                messenger.sendMessage(userRequest.getTelegramUserId() != null ?
-                        userRequest.getTelegramUserId() : userRequest.getTelegramGroupId(), e.getMessage());
-                messenger.sendMessage(userRequest.getTelegramUserId() != null ?
-                        userRequest.getTelegramUserId() : userRequest.getTelegramGroupId(), ServiceMessages.DESTINATION_CITY.text);
-                return userRequest;
-            }
-            List<String> iataCodes = new ArrayList<>();
-            for (Airport airport : airports) {
-                iataCodes.add(airport.getCodeIata());
-                city = airport.getCity();
-                country = airport.getCountryCode();
-            }
-            userRequest.setDestinationCity(city);
-            userRequest.setDestinationCountry(country);
-            userRequest.setDestinationAirports(iataCodes);
-            requestDAL.update(userRequest);
-            messenger.sendMessage(userRequest.getTelegramUserId() != null ?
-                    userRequest.getTelegramUserId() : userRequest.getTelegramGroupId(), ServiceMessages.TRIP_DURATION.text);
-            return userRequest;
-        } else if (userRequest.getTripDuration() == null) {
-            List<Integer> tripDuration = new ArrayList<>();
-            try {
-                tripDuration = utils.getDurationDays(telegramMessage.getMessage().getText().trim());
-            } catch (DurationException e) {
-                messenger.sendMessage(userRequest.getTelegramUserId() != null ?
-                        userRequest.getTelegramUserId() : userRequest.getTelegramGroupId(), e.getMessage());
-                messenger.sendMessage(userRequest.getTelegramUserId() != null ?
-                        userRequest.getTelegramUserId() : userRequest.getTelegramGroupId(), ServiceMessages.TRIP_DURATION.text);
-                return userRequest;
-            }
-            userRequest.setTripDuration(telegramMessage.getMessage().getText().trim());
-            userRequest.setMinTripDurationDays(tripDuration.get(0));
-            userRequest.setMaxTripDurationDays(tripDuration.get(1));
-            requestDAL.update(userRequest);
-            messenger.sendMessage(userRequest.getTelegramUserId() != null ?
-                    userRequest.getTelegramUserId() : userRequest.getTelegramGroupId(), ServiceMessages.SEARCH_PERIOD.text);
-            return userRequest;
-        } else if (userRequest.getSearchPeriod() == null) {
-            List<Date> searchPeriod = new ArrayList<>();
-            try {
-                searchPeriod = utils.getSearchPeriodDates(telegramMessage.getMessage().getText().trim(), userRequest.getMaxTripDurationDays());
-            } catch (SearchPeriodException e) {
-                messenger.sendMessage(userRequest.getTelegramUserId() != null ?
-                        userRequest.getTelegramUserId() : userRequest.getTelegramGroupId(), e.getMessage());
-                messenger.sendMessage(userRequest.getTelegramUserId() != null ?
-                        userRequest.getTelegramUserId() : userRequest.getTelegramGroupId(), ServiceMessages.SEARCH_PERIOD.text);
-                return userRequest;
-            }
-            userRequest.setSearchPeriod(telegramMessage.getMessage().getText().trim());
-            userRequest.setEarliestTripStartDate(searchPeriod.get(0));
-            userRequest.setLatestReturnDate(searchPeriod.get(1));
-            try {
-                Integer optionsQuantity = utils.getRequestsQuantity(userRequest);
-                userRequest.setRequestsQuantity(optionsQuantity);
-                if (utils.isRequestInformationFull(userRequest)) {
-                    userRequest.setCreatedDate(new Date());
-                    userRequest.setStatus(Status.QUEUING);
-                }
-                requestDAL.update(userRequest);
-                messenger.sendMessage(userRequest.getTelegramUserId() != null ?
-                        userRequest.getTelegramUserId() : userRequest.getTelegramGroupId(), ServiceMessages.REQUEST_FILLED.text);
-                return userRequest;
-            } catch (RequestsQuantityException e) {
-                userRequest.setTripDuration(null);
-                userRequest.setMinTripDurationDays(null);
-                userRequest.setMaxTripDurationDays(null);
-                userRequest.setSearchPeriod(null);
-                userRequest.setEarliestTripStartDate(null);
-                userRequest.setLatestReturnDate(null);
-                requestDAL.update(userRequest);
-                messenger.sendMessage(userRequest.getTelegramUserId() != null ?
-                        userRequest.getTelegramUserId() : userRequest.getTelegramGroupId(), e.getMessage());
-                messenger.sendMessage(userRequest.getTelegramUserId() != null ?
-                        userRequest.getTelegramUserId() : userRequest.getTelegramGroupId(), ServiceMessages.TRIP_DURATION.text);
-                return userRequest;
-            }
-        }
-        return null;
     }
 
     @GetMapping(value = "/requests")

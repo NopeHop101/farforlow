@@ -64,26 +64,12 @@ public class ParserModel {
                             }
                         };
                         tasks.add(c);
-                        if (tasks.size() == 30) {
-                            executor(res, tasks);
-                            tasks = new ArrayList<Callable<Result>>();
-                            try {
-                                Thread.sleep(100000);
-                            } catch (Exception e) {
-                            }
-                        }
                     }
                 }
             }
         }
 
-        if (!tasks.isEmpty()) {
-            executor(res, tasks);
-            try {
-                Thread.sleep(100000);
-            } catch (Exception e) {
-            }
-        }
+        executor(res, tasks);
 
         if (!failedProxies.isEmpty() || failuresCount > 0 || secondAttemptSuccessCount > 0) {
             UserRequestsSummary userRequestsSummary = requestsSummaryDAL.getOne();
@@ -110,7 +96,7 @@ public class ParserModel {
     }
 
     private void executor(List<Result> res, List<Callable<Result>> tasks) {
-        ExecutorService exec = Executors.newFixedThreadPool(2);
+        ExecutorService exec = Executors.newFixedThreadPool(1);
         try {
             List<Future<Result>> results = exec.invokeAll(tasks);
             for (Future<Result> fr : results) {

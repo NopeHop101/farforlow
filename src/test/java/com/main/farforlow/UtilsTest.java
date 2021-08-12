@@ -64,13 +64,16 @@ public class UtilsTest {
     public void getSearchPeriodDatesTest() {
         Utils utils = new Utils();
         SimpleDateFormat format = new SimpleDateFormat("dd.MM.yyyy");
+        UserRequest userRequest = new UserRequest();
+        userRequest.setMinTripDurationDays(8);
+        userRequest.setMaxTripDurationDays(10);
         try {
             List<Date> expectedRes = new ArrayList<>(Arrays.asList(format.parse("20.03.2030"), format.parse("20.05.2030")));
-            List<Date> actualRes = utils.getSearchPeriodDates("20.03.2030-20.05.2030", 10);
+            List<Date> actualRes = utils.getSearchPeriodDates("20.03.2030-20.05.2030", userRequest);
             Assert.assertEquals(actualRes, expectedRes);
 
             try {
-                actualRes = utils.getSearchPeriodDates("20.06.2030-20.05.2030", 10);
+                actualRes = utils.getSearchPeriodDates("20.06.2030-20.05.2030", userRequest);
                 Assert.fail();
             } catch (SearchPeriodException e) {
                 Assert.assertTrue(true);
@@ -79,7 +82,15 @@ public class UtilsTest {
             }
 
             try {
-                actualRes = utils.getSearchPeriodDates("20.06.2030-20.05.2030", 10);
+                actualRes = utils.getSearchPeriodDates("20.04.2030-25.04.2030", userRequest);
+                Assert.assertTrue(true);
+                Assert.fail();
+            } catch (SearchPeriodException e) {
+                Assert.fail();
+            }
+
+            try {
+                actualRes = utils.getSearchPeriodDates("20-04.2030-20.05.2030", userRequest);
                 Assert.fail();
             } catch (SearchPeriodException e) {
                 Assert.assertTrue(true);
@@ -88,25 +99,7 @@ public class UtilsTest {
             }
 
             try {
-                actualRes = utils.getSearchPeriodDates("20.04.2030-20.05.2030", 100);
-                Assert.fail();
-            } catch (SearchPeriodException e) {
-                Assert.assertTrue(true);
-            } catch (Exception e) {
-                Assert.fail();
-            }
-
-            try {
-                actualRes = utils.getSearchPeriodDates("20-04.2030-20.05.2030", 10);
-                Assert.fail();
-            } catch (SearchPeriodException e) {
-                Assert.assertTrue(true);
-            } catch (Exception e) {
-                Assert.fail();
-            }
-
-            try {
-                actualRes = utils.getSearchPeriodDates("20/06/2030-20/05/2030", 10);
+                actualRes = utils.getSearchPeriodDates("20/06/2030-20/05/2030", userRequest);
                 Assert.fail();
             } catch (SearchPeriodException e) {
                 Assert.assertTrue(true);

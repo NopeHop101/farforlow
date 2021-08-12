@@ -28,7 +28,8 @@ public class AirportSearchService {
 
         Integer i = 0;
         for (Airport airport : airports) {
-            if ("large_airport".equals(airport.getType()) && airport.getCodeIata() != null && airport.getCodeIata().length() == 3) {
+            if (airport.getCodeIata() != null && (("large_airport".equals(airport.getType()) && airport.getCodeIata().length() == 3) ||
+            "SPU".equals(airport.getCodeIata()))) {
                 if (airportByCityAndCountry.containsKey(airport.getCity().toLowerCase().trim() +
                         ", " + airport.getCountryCode().toLowerCase().trim())) {
                     List<Airport> currentAirports = airportByCityAndCountry.get(airport.getCity().toLowerCase().trim() +
