@@ -2,9 +2,11 @@
 This service is searching for the lowest ticket price for loose search (e.g. Paris to Lima for 2-3 weeks in May-June).
 The search is run daily.
 
-Telegram bot is used as a front end. (messages from users to shape requests)
+Telegram bot is used as a front end. (messages from users shape requests)
 
-Tickets price data is parsed from https://skiplagged.com/ with selenium headless browser. (10 browsers spawned in simultaneously with directional time for 1 search execution - 30s)
+Tickets price data is parsed from https://skiplagged.com/ with selenium headless browser. 
+Time for one search execution is circa 30s.
+Quantity of threads depends on server capacity. Safe load is one thread per core. 
 
 Source for list of cities and airports: https://ourairports.com/data/
 
