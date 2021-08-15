@@ -96,7 +96,7 @@ public class ParserModel {
     }
 
     private void executor(List<Result> res, List<Callable<Result>> tasks) {
-        ExecutorService exec = Executors.newFixedThreadPool(1);
+        ExecutorService exec = Executors.newFixedThreadPool(Integer.parseInt(System.getenv("THREADS_QUANTITY")));
         try {
             List<Future<Result>> results = exec.invokeAll(tasks);
             for (Future<Result> fr : results) {

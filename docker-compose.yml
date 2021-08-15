@@ -15,12 +15,11 @@ services:
       - /home/ubuntu/data:/data/db
   #your app name:
     image: #your image name
-    ports:
-      - 80:8080
     environment:
       APP_TOKEN: #your token that you need to add as header to request to access protected endpoints
       BOT_TOKEN: #your telegram bot token
       BOT_OWNER_TELEGRAM_ID: #your telegram account ID
+      THREADS_QUANTITY: #safe load with one core per thread
       MAX_SEARCHES_PER_DAY: #max quantity of searches per user request
       MAX_SEARCHES_PER_REQUEST: #max quantity of searches per day for all users requests
       AIRPORTS_CSV_PATH: /opt/source-code/data/airports.csv
