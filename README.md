@@ -4,8 +4,10 @@ The search is run daily.
 
 Telegram bot is used as a front end. (messages from users shape requests)
 
-Tickets price data is parsed from https://skiplagged.com/ with selenium headless browser. 
+Tickets price data is parsed from https://skiplagged.com/ with selenium headless browser.
+
 Time for one search execution is circa 30s.
+
 Quantity of threads depends on server capacity. Safe load is one thread per core. 
 
 Source for list of cities and airports: https://ourairports.com/data/
