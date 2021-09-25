@@ -1,20 +1,13 @@
 package com.main.farforlow.controller;
 
-import com.main.farforlow.entity.Airport;
-import com.main.farforlow.entity.Status;
 import com.main.farforlow.entity.UserRequest;
 import com.main.farforlow.entity.UserRequestsSummary;
 import com.main.farforlow.entity.telegrammessage.TelegramMessage;
-import com.main.farforlow.exception.CityException;
-import com.main.farforlow.exception.DurationException;
-import com.main.farforlow.exception.RequestsQuantityException;
-import com.main.farforlow.exception.SearchPeriodException;
 import com.main.farforlow.mongo.RequestDAL;
 import com.main.farforlow.mongo.RequestsSummaryDAL;
 import com.main.farforlow.service.Messenger;
 import com.main.farforlow.service.TelegramCommandsProcessor;
 import com.main.farforlow.service.UserRequestsProcessor;
-import com.main.farforlow.service.Utils;
 import com.main.farforlow.view.ServiceMessages;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -28,8 +21,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 @PreAuthorize("@accessCheck.check(#token)")
@@ -65,7 +56,7 @@ public class RequestController {
         }
         if (telegramMessage.getMessage().getChat().getType().equals("group") &&
                 (telegramMessage.getMessage().getText() == null ||
-                !telegramMessage.getMessage().getText().startsWith("@farforlow_bot"))) {
+                        !telegramMessage.getMessage().getText().startsWith("@farforlow_bot"))) {
             return;
         }
         if (telegramMessage.getMessage().getChat().getType().equals("group") &&
@@ -94,6 +85,28 @@ public class RequestController {
                 } else {
                     messenger.sendMessage(userRequest.getTelegramUserId() != null ?
                             userRequest.getTelegramUserId() : userRequest.getTelegramGroupId(), userRequest.toString());
+                }
+                break;
+            case "/users":
+                if (!telegramMessage.getMessage().getFrom().getUserId().equals(System.getenv("BOT_OWNER_TELEGRAM_ID"))) {
+                    messenger.sendMessage(telegramMessage.getMessage().getChat().getGroupId(),
+                            ServiceMessages.NO_SUCH_COMMAND.text);
+                } else {
+                    StringBuilder users = new StringBuilder();
+                    List<UserRequest> userRequests = requestDAL.getActive();
+                    for (UserRequest user: userRequests) {
+                        if (user.getFirstName() != null) {
+                            users.append(user.getFirstName()).append(" ");
+                        }
+                        if (user.getLastName() != null) {
+                            users.append(user.getLastName()).append(" ");
+                        }
+                        if (user.getUserName() != null) {
+                            users.append("(").append(user.getUserName()).append(")");
+                        }
+                        users.append(";").append(" ");
+                    }
+                    messenger.sendMessage(System.getenv("BOT_OWNER_TELEGRAM_ID"), users.toString());
                 }
                 break;
             case "/queuing":
@@ -199,7 +212,7 @@ public class RequestController {
 
     @PostMapping(value = "/requests/maxRequests/{maxRequests}")
     public ResponseEntity<UserRequestsSummary> updateMaxRequests(@RequestHeader(name = "token") String token,
-                                                             @PathVariable(name = "maxRequests") String maxRequests) {
+                                                                 @PathVariable(name = "maxRequests") String maxRequests) {
         UserRequestsSummary userRequestsSummary = requestsSummaryDAL.getOne();
         if (userRequestsSummary == null) {
             return new ResponseEntity<>(HttpStatus.NOT_MODIFIED);
@@ -217,7 +230,7 @@ public class RequestController {
 
     @PostMapping(value = "/requests/currentRequests/{currentRequests}")
     public ResponseEntity<UserRequestsSummary> updateCurrentRequests(@RequestHeader(name = "token") String token,
-                                                             @PathVariable(name = "currentRequests") String currentRequests) {
+                                                                     @PathVariable(name = "currentRequests") String currentRequests) {
         UserRequestsSummary userRequestsSummary = requestsSummaryDAL.getOne();
         if (userRequestsSummary == null) {
             return new ResponseEntity<>(HttpStatus.NOT_MODIFIED);
