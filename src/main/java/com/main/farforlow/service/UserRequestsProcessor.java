@@ -71,6 +71,9 @@ public class UserRequestsProcessor {
                     requestDAL.update(userRequest);
                     messenger.sendMessage(userRequest.getTelegramUserId() != null ?
                             userRequest.getTelegramUserId() : userRequest.getTelegramGroupId(), ServiceMessages.REQUST_EXPIRED.text);
+                    userRequestsSummary.setCurrentQuantityOfSearches(userRequestsSummary.getCurrentQuantityOfSearches() -
+                            userRequest.getRequestsQuantity());
+                    requestsSummaryDAL.updateOne(userRequestsSummary);
                     continue;
                 }
                 if (userRequestsSummary.getMaxQuantityOfSearches() > userRequestsSummary.getCurrentQuantityOfSearches() +
@@ -91,11 +94,25 @@ public class UserRequestsProcessor {
         if (activeRequests != null && !activeRequests.isEmpty()) {
             for (UserRequest userRequest : activeRequests) {
                 List<Result> results = parserModel.requestExecutor(userRequest);
-                if (results == null) {
+                if (results == null && userRequest.getResults().size() >= 1 && userRequest.getResults().get(userRequest.getResults().size() - 1) == null) {
                     userRequest.setStatus(Status.DELETED);
                     requestDAL.update(userRequest);
                     messenger.sendMessage(userRequest.getTelegramUserId() != null ?
                             userRequest.getTelegramUserId() : userRequest.getTelegramGroupId(), ServiceMessages.CLOSE_REQUST.text);
+                    userRequestsSummary.setCurrentQuantityOfSearches(userRequestsSummary.getCurrentQuantityOfSearches() -
+                            userRequest.getRequestsQuantity());
+                    requestsSummaryDAL.updateOne(userRequestsSummary);
+                    continue;
+                } else if (results == null) {
+                    List<Result> previousResults = userRequest.getResults();
+                    if (previousResults == null) {
+                        previousResults = new ArrayList<>();
+                    }
+                    previousResults.add(null);
+                    userRequest.setResults(previousResults);
+                    requestDAL.update(userRequest);
+                    messenger.sendMessage(userRequest.getTelegramUserId() != null ?
+                            userRequest.getTelegramUserId() : userRequest.getTelegramGroupId(), ServiceMessages.NO_RESULTS.text);
                     continue;
                 }
 

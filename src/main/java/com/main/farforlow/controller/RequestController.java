@@ -1,5 +1,6 @@
 package com.main.farforlow.controller;
 
+import com.main.farforlow.entity.Status;
 import com.main.farforlow.entity.UserRequest;
 import com.main.farforlow.entity.UserRequestsSummary;
 import com.main.farforlow.entity.telegrammessage.TelegramMessage;
@@ -200,6 +201,26 @@ public class RequestController {
             return new ResponseEntity<>(HttpStatus.NOT_MODIFIED);
         } else {
             requestDAL.delete(userRequest);
+            return new ResponseEntity<>(HttpStatus.OK);
+        }
+    }
+
+    @GetMapping(value = "/requests/return/{id}")
+    public ResponseEntity<UserRequest> returnFromDeleted(@RequestHeader(name = "token") String token, @PathVariable(name = "id") String id) {
+        UserRequest userRequest = requestDAL.findById(id);
+        if (userRequest == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_MODIFIED);
+        } else {
+            userRequest.setStatus(Status.ACTIVE);
+            requestDAL.update(userRequest);
+            UserRequestsSummary userRequestsSummary = requestsSummaryDAL.getOne();
+            if (userRequestsSummary == null) {
+                return new ResponseEntity<>(HttpStatus.NOT_MODIFIED);
+            } else {
+                userRequestsSummary.setCurrentQuantityOfSearches(userRequestsSummary.getCurrentQuantityOfSearches() +
+                        userRequest.getRequestsQuantity());
+                requestsSummaryDAL.updateOne(userRequestsSummary);
+            }
             return new ResponseEntity<>(HttpStatus.OK);
         }
     }

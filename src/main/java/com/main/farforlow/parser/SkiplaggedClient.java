@@ -74,8 +74,11 @@ public class SkiplaggedClient {
             WebDriver driver = new ChromeDriver(options);
             try {
                 String requestLink;
+                // Url for specific flight option search https://skiplagged.com/flights/GVA/LED/2021-11-11/2021-11-11
                 requestLink = String.format("https://skiplagged.com/flights/%s/%s/%s/%s",
                         departureAirport, destinationAirport, dateFormat.format(departureDate), dateFormat.format(returnDate));
+
+//                System.out.println("start");
 
                 // Get the main page
                 driver.get(requestLink);
@@ -86,6 +89,8 @@ public class SkiplaggedClient {
                     driver.quit();
                     return res;
                 }
+
+//                System.out.println("site");
 
                 // 3 seconds waiting options from aggregator
                 try {
@@ -118,8 +123,8 @@ public class SkiplaggedClient {
                 }
 
                 String bestPrice;
-                bestPrice = driver.findElement(By.cssSelector("div.span2.trip-cost.text-success")).getText();
-
+                bestPrice = driver.findElement(By.cssSelector("div.span2.trip-cost > p")).getText();
+//                System.out.println(bestPrice);
                 priceCoversion(bestPrice, res);
                 res.setLink(requestLink);
                 res.setOfferDate(new Date());
@@ -157,9 +162,9 @@ public class SkiplaggedClient {
         SkiplaggedClient client = new SkiplaggedClient();
         Result result = new Result();
         Calendar c = Calendar.getInstance();
-        c.set(2021, 10, 11);
+        c.set(2021, 11, 11);
         Date deptDate = c.getTime();
-        c.set(2021, 10, 21);
+        c.set(2021, 11, 21);
         Date retDate = c.getTime();
         result = client.getTripOptionBestPrice("GVA", "LED", deptDate, retDate);
         System.out.println(result);

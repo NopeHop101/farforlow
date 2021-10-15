@@ -13,6 +13,7 @@ public enum ServiceMessages {
     REQUST_EXPIRED("Your request has expired. Hope you found tickets to your dream destination! Send /start for new request."),
     REQUST_QUEUING("Thank you for your patience. This is non-commercial project with limited resources and currently server capacity is fully utilized by requests from other users. Requests in front of you: "),
     CLOSE_REQUST("I can't find any options so closing the request (might be that data source doesn't have this connection or no flights are available for these dates). Send /start to shape new request."),
+    NO_RESULTS("I can't find any options."),
     DAILY_OFFER_VS_BEST("Best offer of the day: %d %s (%+d vs lowest ever found price). More details: %s"),
     DAILY_OFFER("Best offer of the day: %d %s. More details: %s"),
     OTHER_OFFERS_HEADER("Few closest offers for other dates:\n"),
